@@ -74,6 +74,63 @@ Next useful isolation step: run a minimal display-only test that initializes the
 - SD initialization in simulation: successful
 - TFT rendering in simulation: unresolved; black screen persists
 - Every TFT wire endpoint: not conclusively verified
-- Keypad and relay pin maps: not documented in this README
+- Cirkit keypad row/column and four-channel relay IN1–IN4 maps: not documented here; the separate Rev A two-channel relay map is below
 - Physical hardware test: not recorded
 - Firmware source code: intentionally not included in this README; add the project sketch separately if desired
+
+
+## Rev A logic mainboard design findings
+
+The [Valve Controller Mainboard Rev A design brief](hardware/ValveController_Mainboard_RevA/DESIGN_BRIEF.md) records a preliminary interface definition for a standalone Mega 2560-class logic board. It is not a finished PCB design or a fabrication release.
+
+### Keep the two design contexts distinct
+
+The Cirkit Designer investigation documented above describes an ILI9341 TFT and a four-channel relay module. The Rev A interface brief describes a separate character LCD connection and an external two-channel relay module. The documents do not establish that these are the same hardware revision.
+
+There is also a pin assignment conflict that must be resolved before combining or routing the designs: the Cirkit/TFT findings use TFT chip select D53 and SD chip select D47, while the Rev A interface brief assigns SD chip select D53 and does not include a TFT interface. Treat each map as applying to its stated design context until the hardware revision is confirmed.
+
+### Rev A board architecture
+
+- Standalone ATmega2560 board with USB-to-serial interface, following the Arduino Mega 2560 Rev3 reference design for clock, reset, programming, USB, and power sections.
+- LCD, encoder, RTC breakout, SD breakout, and relay module connect as separate modules through keyed and labeled headers.
+- The two-channel relay module stays external. The logic board sends low-voltage control signals; compressor and valve load wiring is not routed on this board.
+
+### Rev A interface pin map
+
+| Function | Mega-compatible pin | Board connection |
+|---|---:|---|
+| Character LCD SCLK | D6 | LCD header pin 5 |
+| Character LCD SID / MOSI | D7 | LCD header pin 3 |
+| Character LCD CS / RS | D8 | LCD header pin 4 |
+| Encoder A | D22 | LCD header pin 7 |
+| Encoder B | D23 | LCD header pin 8 |
+| Encoder click | D24 | LCD header pin 9 |
+| E-stop NC input | D25 | Two-pin E-stop terminal; other pin to GND |
+| Relay 1 command (compressor) | D30 | Relay header IN1 |
+| Relay 2 command (valve) | D31 | Relay header IN2 |
+| RTC SDA | D20 / SDA | RTC header SDA |
+| RTC SCL | D21 / SCL | RTC header SCL |
+| SD MISO | D50 | SD header MISO |
+| SD MOSI | D51 | SD header MOSI |
+| SD SCK | D52 | SD header SCK |
+| SD chip select | D53 | SD header CS |
+
+The character LCD uses a 2x5 connector: 1=+5V, 2=GND, 3=SID, 4=CS/RS, 5=SCLK, 6=NC, 7=Encoder A, 8=Encoder B, 9=Encoder click, and 10=Beeper. The beeper is not currently used in the described interface. Confirm connector gender, key/orientation, and cable against the physical module before routing.
+
+Suggested module header labels are RTC: `5V GND SDA SCL`; SD: `5V GND MISO MOSI SCK CS`; relay: `5V GND IN1 IN2`; and E-stop: `NC GND`. Verify each breakout's header order and 5V tolerance before connection.
+
+### Safety and power boundaries
+
+- The current single normally closed E-stop contact is only a software input. It does not independently disconnect compressor or valve power. The eventual load circuit needs a correctly rated hardwired safety interruption for its supply and load.
+- Do not route mains or compressor/valve load current through the logic PCB.
+- Power input, regulator, USB power isolation, board outline, mounting holes, enclosure, and connector dimensions remain to be selected.
+
+### Open items before fabrication
+
+1. Confirm the character LCD 2x5 connector, cable, and orientation against the physical module.
+2. Confirm the SD and RTC breakout header orders and whether their 5V pins accept 5V.
+3. Select the power input and define enclosure and mounting-hole dimensions.
+4. Create the schematic and PCB layout, run electrical and layout checks, and prepare Gerber, drill, BOM, and assembly files.
+5. Reconcile the Rev A SD chip select on D53 with the Cirkit/TFT map, where TFT CS is D53 and SD CS is D47, before treating the designs as one revision.
+
+The mainboard document is an interface brief only. Do not use it as a fabrication package or order a board from it.
