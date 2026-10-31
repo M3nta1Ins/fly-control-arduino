@@ -11,7 +11,6 @@ An Arduino Mega 2560 fly-control project with hardware notes, documented cycle-c
 
 | Path | Purpose |
 |---|---|
-| Arduino firmware source files | Not included. This repository contains project findings and hardware/interface documentation, not `.ino` source files. |
 | [`hardware/ValveController_Mainboard_RevA/DESIGN_BRIEF.md`](hardware/ValveController_Mainboard_RevA/DESIGN_BRIEF.md) | Preliminary Rev A board interface definition; not a manufacturing package. |
 | [`docs/interface-previews/`](docs/interface-previews/) | Illustrative home, settings, and E-stop screen previews based on the documented primary design. |
 | `README.md` | Circuit findings, cycle behavior, known differences between design contexts, and remaining checks. |
