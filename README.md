@@ -1,13 +1,55 @@
 # Fly Control
 
-An Arduino Mega 2560 project designed in Cirkit Designer. The circuit combines an ILI9341 SPI TFT, microSD card, DS3231 real-time clock, keypad, and four-channel relay module. The project and this repository are for documenting and troubleshooting the complete design. Firmware source code is intentionally not included in this README.
+An Arduino Mega 2560 fly-control project with firmware, hardware notes, and documented troubleshooting findings. This repository includes the primary cycle-control sketch and a separate UI-only backup. The older Cirkit Designer ILI9341 TFT investigation, the current ST7920-based firmware, and the Rev A mainboard interface brief describe distinct design contexts; their differences and unresolved pin assignments are documented below.
 
 ## Project links
 
 - [Open the Cirkit Designer project](https://app.cirkitdesigner.com/project/24b07511-9851-44f0-a418-0e4dbb4c1f2e)
 - [GitHub repository](https://github.com/M3nta1Ins/fly-control-arduino)
 
-## Components in the design
+## Repository contents
+
+| Path | Purpose |
+|---|---|
+| [`firmware/ValveController_MultiInterface/ValveController_MultiInterface.ino`](firmware/ValveController_MultiInterface/ValveController_MultiInterface.ino) | Primary working firmware for the ST7920 display, RTC, SD card, encoder, two relays, and emergency-stop input. |
+| [`firmware/ValveController_UI/ValveController_UI.ino`](firmware/ValveController_UI/ValveController_UI.ino) | Simpler UI-only backup. It does not configure or operate relay, compressor, or valve outputs. |
+| [`hardware/ValveController_Mainboard_RevA/DESIGN_BRIEF.md`](hardware/ValveController_Mainboard_RevA/DESIGN_BRIEF.md) | Preliminary Rev A board interface definition; not a manufacturing package. |
+| [`docs/interface-previews/`](docs/interface-previews/) | Illustrative home, settings, and E-stop screen previews based on the primary sketch. |
+| `README.md` | Circuit findings, cycle behavior, known differences between design contexts, and remaining checks. |
+
+## Primary firmware and cycle behavior
+
+The primary sketch targets an Arduino Mega 2560 with an Ender 3 ENH12864Z-1 display using the ST7920 controller, a DS3231 RTC, an SD card, a rotary encoder, two active-low relay inputs, and a normally closed emergency-stop input. The display uses software SPI on D6–D8 so the SD card can use the Mega hardware SPI bus (MISO D50, MOSI D51, SCK D52, CS D53). Relay commands are on D30 and D31; the E-stop input is on D25. The sketch's relay outputs are control signals, and the actuator loads are not wired in the described setup.
+
+| Primary firmware function | Mega pin | Notes |
+|---|---:|---|
+| ST7920 display clock / E | D6 | Software SPI |
+| ST7920 display data / SID | D7 | Software SPI |
+| ST7920 display chip select / RS | D8 | Software SPI |
+| Encoder A | D22 | LCD module pin 5 |
+| Encoder B | D23 | LCD module pin 8 |
+| Encoder push button | D24 | LCD module pin 9 |
+| Normally closed E-stop input | D25 | Pull-up input; open circuit latches a stop |
+| Compressor relay command | D30 | Active-low relay input |
+| Valve relay command | D31 | Active-low relay input |
+| RTC SDA / SCL | D20 / D21 | Mega hardware I2C |
+| SD MISO / MOSI / SCK / CS | D50 / D51 / D52 / D53 | Mega hardware SPI |
+
+When a cycle starts, the firmware energizes the compressor relay and keeps the valve relay off for a 2-second compressor lead-in. It then opens the valve for the configured valve time, adjustable from 1 to 60 seconds (default 5 seconds). When that timer expires, the firmware now de-energizes **both** relay outputs, clears the compressor and valve status flags, and marks the cycle idle in the same cycle-poll pass. The compressor command therefore ends with the cycle; it no longer remains on after the valve closes.
+
+In automatic mode, the configured interval schedules the next cycle. If a long cycle outlasts that deadline, the next cycle is deferred by a full interval after completion, preventing an immediate compressor restart. In manual mode, a cycle is started from the settings menu. An open or broken normally closed E-stop circuit latches the stop and disables both outputs; after the circuit closes again, the encoder acknowledgment clears the latch but does not start a cycle automatically. Relay tests are separate short diagnostics and are blocked while a cycle or an output is active.
+
+The E-stop is a software input and does not independently disconnect load power. Do not route mains or compressor/valve load current through the logic board. The hardware needs a correctly rated hardwired safety interruption for the actual supply and load before actuator use.
+
+## Interface previews
+
+The following are illustrative mockups of screens drawn by the primary firmware for its 128×64 ST7920 display. They are not photographs or captures of a physical device. The home example shows the normal state after a cycle has ended, with the compressor command off and the valve closed.
+
+| Home screen | Settings menu | Emergency stop |
+|---|---|---|
+| ![Home screen: cycle complete](docs/interface-previews/home.svg) | ![Settings menu: interval selected](docs/interface-previews/settings.svg) | ![Emergency stop screen](docs/interface-previews/estop.svg) |
+
+## Components in the Cirkit Designer circuit
 
 - Arduino Mega 2560 controller
 - ILI9341 SPI TFT display (the display under investigation)
@@ -17,9 +59,9 @@ An Arduino Mega 2560 project designed in Cirkit Designer. The circuit combines a
 - Four-channel 5 V relay module
 - A separate character LCD is also visible in the circuit, but it is not part of the TFT issue and is treated as unrelated for this investigation.
 
-## TFT pin assignments in the sketch
+## Cirkit/TFT investigation pin assignments
 
-These are the pin numbers defined by the current sketch. They describe the intended connections; they do not by themselves prove that every wire terminates on the correct component pin.
+These pin numbers apply to the historical Cirkit Designer ILI9341 TFT investigation, not to the primary ST7920 firmware above. They describe intended connections and do not prove that every wire terminates on the correct component pin.
 
 | ILI9341 signal | Arduino Mega 2560 pin |
 | --- | ---: |
@@ -32,15 +74,15 @@ These are the pin numbers defined by the current sketch. They describe the inten
 
 The SD card uses chip select pin 47 and shares the Mega SPI bus. The TFT and SD card have separate chip-select pins. Mega hardware SPI uses pin 51 for MOSI, pin 52 for SCK, and pin 50 for MISO. The SD card needs its SPI signals for storage access; display-only TFT writes do not require TFT MISO. The previous visual review indicated the TFT power and backlight were connected to 3.3 V with a common ground, but the full set of wire endpoints was not conclusively verified.
 
-The RTC is accessed over I2C. The Mega 2560 I2C pins are SDA 20 and SCL 21; verify that the RTC SDA/SCL wires land on those pins. The keypad row/column pin mapping and the relay IN1–IN4 pin mapping have not been recorded here, so they still need to be traced from the project/code before hardware use.
+For the Cirkit/TFT investigation, the RTC uses I2C on Mega pins SDA 20 and SCL 21. Its keypad row/column and four-channel relay IN1–IN4 mappings were not recorded, so those simulator-design connections still need to be traced before hardware use. The separate primary firmware pin map is listed above.
 
-## Firmware setup relevant to the TFT
+## Cirkit/TFT firmware findings
 
-The sketch uses the Arduino `SPI`, `SD`, and `Wire` libraries, Adafruit GFX and Adafruit ILI9341, RTClib, and Keypad. The TFT object is configured with CS 53, DC 48, and RESET 49. In setup, the display is started with `tft.begin()`, set to rotation 1, and cleared using the project background color.
+The earlier Cirkit/TFT sketch used the Arduino `SPI`, `SD`, and `Wire` libraries, Adafruit GFX and Adafruit ILI9341, RTClib, and Keypad. Its TFT object used CS 53, DC 48, and RESET 49. During that investigation, the display was initialized, set to rotation 1, and cleared using the project background color.
 
 During troubleshooting, startup was updated to explicitly call `SPI.begin()` and set both TFT CS 53 and SD CS 47 inactive (HIGH) before TFT initialization. This is intended to prevent either device from being selected while the shared SPI bus is starting. No circuit wiring was changed.
 
-## Problem being investigated
+## Cirkit/TFT problem being investigated
 
 The ILI9341 remains completely black in the Cirkit Designer simulation. The program compiles and runs, but no TFT output is visible. The simulation console reports:
 
@@ -60,13 +102,13 @@ This confirms that the sketch starts and the simulated SD card initializes; it d
 5. Confirmed that SD initialization and the startup log succeed, while the TFT still appears black.
 6. Reviewed the more visible circuit layout. The intended SPI/control wiring appears plausible, but not every endpoint could be verified conclusively from the view, so a wiring fault has not been ruled out.
 
-## Current assessment and open checks
+## Cirkit/TFT current assessment and open checks
 
 The SPI startup change did not fix the simulated TFT. The cause is still undetermined. Possible areas to check are: exact wire endpoints and common ground; TFT module power/backlight and logic-level requirements; whether the module is truly an SPI ILI9341 variant; the simulator component model and its supported pin names; and whether the display drawing code runs after initialization. The SD success message alone cannot distinguish among these causes.
 
 Next useful isolation step: run a minimal display-only test that initializes the ILI9341 and fills the screen with a bright color, with the SD card deselected. If that still produces a black simulation display, test the simulator model/pin mapping or the physical module separately. Keep the original circuit and code backed up before any further changes.
 
-## Project status
+## Cirkit/TFT project status
 
 - Board: Arduino Mega 2560
 - Display: ILI9341 SPI TFT
@@ -76,18 +118,18 @@ Next useful isolation step: run a minimal display-only test that initializes the
 - Every TFT wire endpoint: not conclusively verified
 - Cirkit keypad row/column and four-channel relay IN1–IN4 maps: not documented here; the separate Rev A two-channel relay map is below
 - Physical hardware test: not recorded
-- Firmware source code: intentionally not included in this README; add the project sketch separately if desired
+- Primary working sketch and UI-only backup: included under `firmware/`
 
 
 ## Rev A logic mainboard design findings
 
 The [Valve Controller Mainboard Rev A design brief](hardware/ValveController_Mainboard_RevA/DESIGN_BRIEF.md) records a preliminary interface definition for a standalone Mega 2560-class logic board. It is not a finished PCB design or a fabrication release.
 
-### Keep the two design contexts distinct
+### Keep the design contexts distinct
 
-The Cirkit Designer investigation documented above describes an ILI9341 TFT and a four-channel relay module. The Rev A interface brief describes a separate character LCD connection and an external two-channel relay module. The documents do not establish that these are the same hardware revision.
+The Cirkit Designer investigation documented above describes an ILI9341 TFT and a four-channel relay module. The primary firmware included in this repository uses an ST7920 128x64 display and two relay outputs. The Rev A interface brief describes a preliminary character-LCD and external two-channel-relay interface. The available material does not establish that the Cirkit/TFT design is the same hardware revision as the firmware or Rev A board.
 
-There is also a pin assignment conflict that must be resolved before combining or routing the designs: the Cirkit/TFT findings use TFT chip select D53 and SD chip select D47, while the Rev A interface brief assigns SD chip select D53 and does not include a TFT interface. Treat each map as applying to its stated design context until the hardware revision is confirmed.
+There is also a pin assignment conflict that must be resolved before combining or routing the designs: the Cirkit/TFT findings use TFT chip select D53 and SD chip select D47, while the primary firmware and Rev A interface brief assign SD chip select D53 and do not include that TFT interface. Treat each map as applying to its stated design context until the hardware revision is confirmed.
 
 ### Rev A board architecture
 

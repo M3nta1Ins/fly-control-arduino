@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title desc">
+  <title id="title">Fly Control home screen preview</title>
+  <desc id="desc">Illustrative monochrome mockup of the primary firmware's home display after a cycle ends.</desc>
+  <rect x="8" y="8" width="624" height="384" rx="28" fill="#292d32" stroke="#737982" stroke-width="4"/>
+  <rect x="30" y="30" width="580" height="340" rx="18" fill="#171a1e" stroke="#08090b" stroke-width="3"/>
+  <circle cx="22" cy="22" r="5" fill="#8c929a"/><circle cx="618" cy="22" r="5" fill="#8c929a"/>
+  <circle cx="22" cy="378" r="5" fill="#8c929a"/><circle cx="618" cy="378" r="5" fill="#8c929a"/>
+  <rect x="64" y="72" width="512" height="256" fill="#020303" stroke="#9ba1a8" stroke-width="2"/>
+  <g transform="translate(64 72) scale(4)" fill="#f1f2ed" font-family="Arial, sans-serif">
+    <text x="0" y="9" font-size="8">FLY CONTROL</text><text x="85" y="9" font-size="7">BETA</text>
+    <path d="M0 12H128" stroke="#f1f2ed" stroke-width="0.6"/>
+    <text x="0" y="34" font-size="18">14:25</text>
+    <text x="0" y="44" font-size="6">2026-10-30</text>
+    <text x="62" y="22" font-size="7">MODE: AUTO</text>
+    <text x="53" y="33" font-size="7">COMP CMD: OFF</text>
+    <text x="50" y="44" font-size="7">VALVE: CLOSED</text>
+    <path d="M0 48H128" stroke="#f1f2ed" stroke-width="0.6"/>
+    <text x="0" y="61" font-size="7">NEXT 06:00</text><text x="94" y="61" font-size="7">SD OK</text>
+  </g>
+</svg>
