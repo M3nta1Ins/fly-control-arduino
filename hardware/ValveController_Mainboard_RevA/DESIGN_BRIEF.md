@@ -32,11 +32,11 @@ LCD header is the user's 2x5 module pinout: 1=+5V, 2=GND, 3=SID, 4=CS/RS, 5=SCLK
 
 Suggested module header labels: RTC `5V GND SDA SCL`; SD `5V GND MISO MOSI SCK CS`; relay `5V GND IN1 IN2`; E-stop `NC GND`.
 
-## Current firmware cycle behavior
+## Documented cycle behavior (firmware source not included)
 
-The primary firmware starts the compressor relay command at cycle start and keeps the valve relay off for a 2-second compressor lead-in. It then opens the valve for the configured valve time (1–60 seconds; default 5 seconds). When that valve timer expires, the firmware commands both the compressor and valve relays off in the same cycle-finish pass and marks the cycle idle. The compressor command does not continue after the cycle ends. If an automatic cycle's next-start deadline passes before the current cycle finishes, the next start is deferred by one full configured interval after completion so the compressor does not restart immediately.
+The documented cycle behavior starts the compressor relay command at cycle start and keeps the valve relay off for a 2-second compressor lead-in. It then opens the valve for the configured valve time (1–60 seconds; default 5 seconds). When that valve timer expires, the documented behavior commands both the compressor and valve relays off in the same cycle-finish pass and marks the cycle idle. The compressor command does not continue after the cycle ends. If an automatic cycle's next-start deadline passes before the current cycle finishes, the next start is deferred by one full configured interval after completion so the compressor does not restart immediately. These notes describe intended behavior; the firmware source is not included in this repository.
 
-Opening or breaking the normally closed E-stop circuit latches an emergency stop and disables both relay outputs. Reclosing the circuit and acknowledging the stop clears the latch but does not restart a cycle. These are firmware command behaviors; the E-stop input does not independently interrupt the compressor or valve power circuit.
+Opening or breaking the normally closed E-stop circuit is documented to latch an emergency stop and disable both relay outputs. Reclosing the circuit and acknowledging the stop clears the latch but does not restart a cycle. These describe intended firmware command behaviors; the E-stop input does not independently interrupt the compressor or valve power circuit.
 
 ## Safety and power boundaries
 

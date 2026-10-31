@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title desc">
   <title id="title">Fly Control emergency stop screen preview</title>
-  <desc id="desc">Illustrative monochrome mockup of the primary firmware's latched E-stop screen while the normally closed circuit is open.</desc>
+  <desc id="desc">Illustrative monochrome mockup of the documented primary design's latched E-stop screen while the normally closed circuit is open.</desc>
   <rect x="8" y="8" width="624" height="384" rx="28" fill="#292d32" stroke="#737982" stroke-width="4"/>
   <rect x="30" y="30" width="580" height="340" rx="18" fill="#171a1e" stroke="#08090b" stroke-width="3"/>
   <circle cx="22" cy="22" r="5" fill="#8c929a"/><circle cx="618" cy="22" r="5" fill="#8c929a"/>
